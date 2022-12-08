@@ -131,3 +131,32 @@ JOIN covid_vaccinations cv
 	AND cd.date = cv.date
 WHERE cd.continent IS NOT NULL AND cd.continent != ''
 
+-- Queries that will be used to create data visualizations on Tableau
+-- 1st query
+SELECT SUM(new_cases) as total_cases, SUM(new_deaths) as total_deaths, SUM(new_deaths)/SUM(new_cases)*100 AS death_percentage
+FROM covid_deaths cd 
+WHERE cd.continent IS NOT NULL AND cd.continent != ''
+ORDER BY 1,2
+
+-- 2nd QUERY 
+
+SELECT location, SUM(new_deaths) AS total_death_count
+FROM covid_deaths cd 
+WHERE cd.continent = ''
+AND location NOT IN ('World', 'European Union', 'International')
+GROUP BY location 
+ORDER BY total_death_count DESC
+
+-- 3rd QUERY 
+
+SELECT location, population, MAX(total_cases) AS highest_infection_count, MAX((total_cases/population))*100 AS infected_population_percent
+FROM covid_deaths cd 
+GROUP BY location, population 
+ORDER BY infected_population_percent DESC
+
+-- 4th QUERY 
+
+SELECT date, location, population, MAX(total_cases) AS highest_infection_count, MAX((total_cases/population))*100 AS infected_population_percent
+FROM covid_deaths cd 
+GROUP BY location, population, date
+ORDER BY infected_population_percent DESC
