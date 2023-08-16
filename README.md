@@ -25,7 +25,7 @@ Alex Freberg - YouTube
 
 Nashville Housing Data Cleaning				    	       
 Kaggle										           		    
-  •	Cleaned and manipulated 56,478 rows of Nashville Housing data on Microsoft Excel using formatting and formulas.
-  •	Created additional columns, including Sum Total Value column to check if Total Values were correctly calculated.
-  •	Removed duplicates and rows with null values to produce clean and filled columns and rows.
+  •	Cleaned and manipulated 56,478 rows of Nashville Housing data on Microsoft Excel using formatting and formulas. 
+  •	Created additional columns, including Sum Total Value column to check if Total Values were correctly calculated. 
+  •	Removed duplicates and rows with null values to produce clean and filled columns and rows. 
 
