@@ -17,13 +17,14 @@ Alex the Analyst – YouTube
   •	Utilised Microsoft Excel Pivot Tables and Charts to visualise 4 Bike sales trends amongst 4 different demographics including education and income.
   •	Created 3 charts to visualise and included slicers to filter by demographic.
 •	Cleaned and manipulated the data set using IFs and formatting.
+
 Data Jobs Salaries Dashboard Analysis and Visualisation						     	      
 Alex Freberg - YouTube									           		    
 •	Analysed data job salaries data using Microsoft Excel, utilizing cleaning tools and formulas, such as data type formatting, splitting columns, and XLOOKUP, and analysis tools such as Pivot tables.
 •	Visualized the data using both Tableau and Power BI, including bar charts and trend lines in the analysis.
 
-Nashville Housing Data Cleaning
-Kaggle
+Nashville Housing Data Cleaning				    	       
+Kaggle										           		    
   •	Cleaned and manipulated 56,478 rows of Nashville Housing data on Microsoft Excel using formatting and formulas.
   •	Created additional columns, including Sum Total Value column to check if Total Values were correctly calculated.
   •	Removed duplicates and rows with null values to produce clean and filled columns and rows.
