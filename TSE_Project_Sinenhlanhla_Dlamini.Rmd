@@ -1,0 +1,202 @@
+---
+title: "TSE Final Project"
+author: "Sinenhlanhla N. Dlamini"
+date: "2024-12-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls(all = TRUE)); graphics.off(); cat("\014")
+
+set.seed(12345)
+listofpackages <- c("TSA", "quantmod", "stargazer", "vars", "svars") 
+
+for (j in listofpackages){
+  if(sum(installed.packages()[, 1] == j) == 0) { install.packages(j) }
+  library(j, character.only = T)
+}
+```
+
+## 1. Collect daily data for the past five (5) years for the S&P 500 and five (5) individual stocks from online sources such as Yahoo Finance, FRED, or OANDA.
+
+```{r}
+symbols <- c("^GSPC", "BX","BLK", "BRK-B", "JPM", "WFC")
+getSymbols(symbols, src = "yahoo", from = "2019-12-07", to = "2024-12-07")
+
+SP500 <- Cl(GSPC)
+Blackstone <- Cl(BX)
+Blackrock <- Cl(BLK)
+JPMorgan <- Cl(JPM)
+WellFargo <- Cl(WFC)
+Berkshire <- Cl(`BRK-B`)
+
+sp500_data <- ts(SP500, frequency=252)
+blackstone_data <- ts(Blackstone, frequency=252)
+blackrock_data <- ts(Blackrock, frequency=252)
+jpmorgan_data <- ts(JPMorgan, frequency=252)
+wellsfargo_data <- ts(WellFargo, frequency=252)
+berkshire_data <- ts(Berkshire, frequency=252)
+```
+
+## 2. Visualize the time series data. Assess whether the series exhibit stationarity.
+
+```{r}
+merged_data <- cbind(sp500_data, blackstone_data, blackrock_data, jpmorgan_data, wellsfargo_data, berkshire_data)
+head(merged_data)
+
+columns <- c("S&P 500", "Blackstone", "Blackrock", "JP Morgan", "Wells Fargo & Co", "Berkshire Hathaway")
+colnames(merged_data) <- columns
+
+head(merged_data)
+
+```
+
+```{r, fig.height=7, fig.width=9}
+plot(merged_data, main = "Daily Close Prices", col = 1:ncol(merged_data))
+```
+
+Just by looking at the graphs, the data appears to be non-stationary. Therefore there is a need to difference the data as to get data that is stationary for the analysis that is less complex as compared to when the data is non-stationary. 
+
+Using the ADF test, we test to see if we can reject the null hypothesis that the data is non-stationary. 
+
+```{r}
+
+library(tseries)
+adf_test <- sapply(merged_data, function(v) adf.test(v, alternative = "stationary")$p.value)
+adf_test
+nonstationary_series <- names(adf_test[adf_test > 0.05])
+nonstationary_series
+```
+
+The ADF test confirms that the data is indeed non-stationary as the p-values for each series are >0.05 meaning we fail to reject the null hypothesis of non-stationarity.
+
+## 3. For any series identified as nonstationary, apply appropriate transformations (e.g., differencing or logarithmic transformations) and plot the adjusted series. 
+```{r, fig.height=7, fig.width=9}
+
+transformed_data <- cbind(100*diff(log(sp500_data)), 100*diff(log(blackstone_data)), 100*diff(log(blackrock_data)), 100*diff(log(jpmorgan_data)), diff(wellsfargo_data), diff(berkshire_data))
+colnames(transformed_data) <- columns
+plot(transformed_data, main = "Log Transformed data", col = 1:ncol(merged_data))
+
+adf_test <- sapply(transformed_data, function(series) adf.test(series, alternative = "stationary")$p.value)
+adf_test
+
+```
+
+We transform each series individually and test if we can reject our null hypothesis, which is non-stationarity. By looking at the plots, the data now looks stationary. 
+
+## 4. Perform formal stationarity tests on the series.
+
+I use the ADF test and the KPSS test to formally test for stationarity
+
+```{r}
+stationary_data <- transformed_data
+
+stationarity_test <- apply(stationary_data, 2, function(series) {
+  list(
+    ADF_p_value = adf.test(series)$p.value,
+    KPSS_p_value = kpss.test(series)$p.value
+  )
+})
+
+print(stationarity_test)
+stationarity_table <- do.call(rbind, lapply(stationarity_test, function(result) {
+  data.frame(
+    ADF_p_value = result$ADF_p_value,
+    Stationary_ADF = ifelse(result$ADF_p_value < 0.05, "Yes", "No"),
+    KPSS_p_value = result$KPSS_p_value,
+    Stationary_KPSS = ifelse(result$KPSS_p_value > 0.05, "Yes", "No")
+  )
+}))
+
+rownames(stationarity_table) <- colnames(transformed_data)
+
+# View the table
+print(stationarity_table)
+```
+
+## 5. Determine the optimal lag length for a Vector Autoregression (VAR) model.
+
+```{r}
+lag_selection <- VARselect(stationary_data, lag.max = 10, type = "none")
+lag_selection$criteria
+```
+
+```{r}
+
+optimal_lag <- lag_selection$selection[1]
+optimal_lag
+
+```
+
+The optimal lag for this VAR model is lag 2 based on the AIC value. Therefore we continue with the lag 2, also the BIC suggests a lag 1 as optimal for this model.
+
+## 6. Estimate a VAR model based on the series.
+
+```{r}
+model_estimate <- VAR(transformed_data, p = optimal_lag, type = "none")
+
+stargazer(model_estimate[[1]], type = "text", float = TRUE,
+          column.sp.width = "1pt", font.size = "scriptsize",
+          report = "vc", header = F, single.row = FALSE,
+          digits = 3, p.auto = F, df=F)
+```
+
+## 7. Generate forecasts for each series using the fitted VAR model.
+
+```{r, fig.height = 5, fig.width=9}
+
+forecast.series <- predict(model_estimate, n.ahead = 365)
+par(mai = rep(0.4, 4)) ; plot(forecast.series)
+
+```
+
+## 8. Examine the impact of shocks to the S&P 500 on the other series within the VAR framework. Provide a detailed interpretation of the findings.
+
+```{r}
+irf_blackstone <- irf(model_estimate, impulse = "S.P.500", response = "Blackstone")
+plot(irf_blackstone)
+```
+
+
+```{r}
+irf_blackrock <- irf(model_estimate, impulse = "S.P.500", response = "Blackrock")
+plot(irf_blackrock)
+```
+
+```{r}
+irf_jpmorgan <- irf(model_estimate, impulse = "S.P.500", response = "JP.Morgan")
+plot(irf_jpmorgan)
+```
+
+```{r}
+irf_berkshire <- irf(model_estimate, impulse = "S.P.500", response = "Berkshire.Hathaway")
+plot(irf_berkshire)
+```
+
+```{r}
+irf_wellsfargo <- irf(model_estimate, impulse = "S.P.500", response = "Wells.Fargo...Co")
+plot(irf_wellsfargo)
+```
+
+```{r}
+irf_blackstone 
+irf_jpmorgan
+irf_blackrock
+irf_wellsfargo
+irf_berkshire
+
+```
+
+### Interpretation of the results.
+
+Blackstone reacts strongly to the shocks in the S&P 500, with a response shock of 1.96 at a 95% confidence interval of [1.71, 2.21]. The positive reponse and statistical significance reflect its market sensitivity. In period 2, the response is slightly negative but is small, with a response shock of -0.086. The persistence period for Blackstone is approximately 7 periods, with responses alternating between small positive and negative values, before approaching zero by period 11.
+
+Blackrock has a response to the S&P 500 shock of 1.56 with a confidence interval of 95% between [1.38, 1.69]. The response is positive reflecting that it is an asset management firm that is sensitive to market fluctuations. The response is persistent for approximately 8 periods, with its slower market adjustments compared to more focused firms.
+
+JP Morgan shows a strong and immediate response to the shocks in the S&P 500, with a response shock of 1.40 at a 95% confidence interval of [1.14, 1.57]. The response is positive and statistically significant suggesting that its highly sensitive to market changes. Its fluctuating responses suggest that it has short-term volatility. The response persists for about 10 periods before zeroing. This large response could is possibly due to its focus in investment banking
+
+Wells Fargo shows the lowest immediate repsonse to the shocks in the S&P 500, with a response shock of 0.57, with a confidence interval of [0.50, 0.63] at 95% confidence. The response is positive and statistically significant. However, the response becomes negative in period 2 (-0.046) and fluctuating with small magnitudes around zero. The responses approach zero by period 7. This smaller immediate response could be due to its focus on retail banking rather than investment banking compared to the other firms. 
+
+Berkshire Hathaway reflects a response of 2.56 to the S&P 500 shock. Its role as a diversified holding company is possibly the reason it shows the largest immediate response among the variables. It oscillates with small magnitudes, stabilizing mear zero after period 9. The strong respise reflects its broad market exposure but quickly stabilizes because of its effective diversification.
+
+
