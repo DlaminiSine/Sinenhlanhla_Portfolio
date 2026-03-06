@@ -1,4 +1,4 @@
--- This is a data analysis project that will look into the most recent Fanatsy Premier League data. My aim? To see how players are performing and whole the leaders are
+-- This is a data analysis project that will look into the most recent Fanatsy Premier League data. My aim? To see how players are performing and whole the leaders are in each category
 
 -- First, I need to validate the data 
 
@@ -6,7 +6,7 @@ SELECT *
 FROM cleaned_players cp 
 LIMIT 50
 
--- Identifying duplicates
+-- Identifying duplicates and clean up to only have one
 
 SELECT first_name, second_name, COUNT(*)
 FROM cleaned_players cp 
@@ -25,6 +25,8 @@ SELECT *
 FROM cleaned_players cp 
 WHERE first_name = 'Ben' AND second_name = 'Davies'
 
+-- I want to create a row in the cleaned players table that will have the merged names found in the merged gw table
+
 SELECT CONCAT(first_name, ' ', second_name) AS name
 FROM cleaned_players cp 
 LIMIT 10
@@ -35,7 +37,7 @@ ADD name TEXT
 UPDATE cleaned_players 
 SET name = CONCAT(first_name, ' ', second_name)
 
--- The dataset is from vaastav and has no null VALUES 
+-- The dataset is from vaastav and now has no null VALUES 
  
 --Moving on to the exploration of the dataset
 
@@ -76,7 +78,7 @@ SELECT MAX(kickoff_time)
 FROM merged_gw mg 
 LIMIT 5
 
---So this data set runs from the first game day to new years day
+--So this data set runs from the first gameweek up till the 19th gameweek
 
 
 SELECT first_name, second_name, name
@@ -86,7 +88,7 @@ FROM cleaned_players cp
 
 -- Top 5 goalkeepers with the most points
 
-SELECT cp.name, cp.total_points
+SELECT cp.name, cp.clean_sheets , cp.total_points
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name 
@@ -97,7 +99,7 @@ LIMIT 5
 
 -- Top 5 defenders with the most points
 
-SELECT cp.name, cp.total_points
+SELECT cp.name, cp.clean_sheets , cp.goals_scored , cp.total_points
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name 
@@ -108,7 +110,7 @@ LIMIT 5
 
 -- Top 5 midfielders with the most points
 
-SELECT cp.name, cp.total_points
+SELECT cp.name, cp.goals_scored , cp.assists , cp.total_points
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name 
@@ -132,20 +134,21 @@ SELECT minutes
 FROM cleaned_players cp 
 ORDER BY minutes DESC 
 LIMIT 1
+
 -- Of the players who have not played every single minute so far, who has the most points
 
-SELECT name, total_points, minutes
-FROM cleaned_players cp 
-WHERE minutes != 1530
-GROUP BY name, minutes, total_points   
-ORDER BY total_points DESC
+SELECT cp.name, cp.total_points, cp.minutes, mg.position, cp.now_cost 
+FROM cleaned_players cp , merged_gw mg
+WHERE cp.minutes != 1707
+GROUP BY cp.name, cp.minutes, cp.total_points   
+ORDER BY cp.total_points DESC
 LIMIT 20
 
 -- Of the players who have played every single minute so far, who has the most points
 
 SELECT name, total_points, minutes
 FROM cleaned_players cp 
-WHERE minutes = 1530
+WHERE minutes = 1707
 GROUP BY name, minutes, total_points   
 ORDER BY total_points DESC
 LIMIT 20
@@ -156,7 +159,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes != 1530 AND mg.position = 'GK'
+WHERE cp.minutes != 1707 AND mg.position = 'GK'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -167,7 +170,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes = 1530 AND mg.position = 'GK'
+WHERE cp.minutes = 1707 AND mg.position = 'GK'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -178,7 +181,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes != 1530 AND mg.position = 'DEF'
+WHERE cp.minutes != 1707 AND mg.position = 'DEF'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -189,7 +192,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes = 1530 AND mg.position = 'DEF'
+WHERE cp.minutes = 1707 AND mg.position = 'DEF'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -200,7 +203,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes != 1530 AND mg.position = 'MID'
+WHERE cp.minutes != 1707 AND mg.position = 'MID'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -211,7 +214,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes = 1530 AND mg.position = 'MID'
+WHERE cp.minutes = 1707 AND mg.position = 'MID'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -223,7 +226,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes != 1530 AND mg.position = 'FWD'
+WHERE cp.minutes != 1707 AND mg.position = 'FWD'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5
@@ -234,7 +237,7 @@ SELECT cp.name, cp.total_points, cp.minutes
 FROM cleaned_players cp 
 JOIN merged_gw mg 
 	ON cp.name = mg.name
-WHERE cp.minutes = 1530 AND mg.position = 'FWD'
+WHERE cp.minutes = 1707 AND mg.position = 'FWD'
 GROUP BY cp.name, cp.minutes, cp.total_points   
 ORDER BY cp.total_points DESC
 LIMIT 5 --No forwards have played every minute
