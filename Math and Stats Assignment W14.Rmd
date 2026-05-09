@@ -1,0 +1,244 @@
+---
+title: "Math and Stats Assignment W14 - Capstone Project"
+author: "Dlamini Sinenhlanhla Nonjabuliso"
+date: "Spring 2026"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr) 
+library(tidyverse) 
+library(rstatix) 
+library(ggpubr)
+library(EnvStats)
+```
+
+
+```{r}
+library(readxl)
+Earnings_and_Height <- read_excel("Downloads/Earnings_and_Height.xlsx")
+```
+
+## Find means, standard deviations, and medians for earnings, height, weight, age and years of education.
+
+### The summary statistics for earnings:
+
+```{r}
+cat('Mean: ', mean(Earnings_and_Height$earnings), '\n')
+cat('Standard Deviation: ', sd(Earnings_and_Height$earnings), '\n')
+cat('Median: ', median(Earnings_and_Height$earnings), '\n')
+```
+
+### The summary statistics for height:
+
+```{r}
+
+cat('Mean: ', mean(Earnings_and_Height$height), '\n')
+cat('Standard Deviation: ', sd(Earnings_and_Height$height), '\n')
+cat('Median: ', median(Earnings_and_Height$height), '\n')
+
+```
+
+### The summary statistics for weight:
+
+```{r}
+
+cat('Mean: ', mean(Earnings_and_Height$weight), '\n')
+cat('Standard Deviation: ', sd(Earnings_and_Height$weight), '\n')
+cat('Median: ', median(Earnings_and_Height$weight), '\n')
+
+```
+
+### The summary statistics for age:
+
+```{r}
+
+cat('Mean: ', mean(Earnings_and_Height$age), '\n')
+cat('Standard Deviation: ', sd(Earnings_and_Height$age), '\n')
+cat('Median: ', median(Earnings_and_Height$age), '\n')
+
+```
+
+### The summary statistics for years of education:
+
+```{r}
+
+cat('Mean: ', mean(Earnings_and_Height$educ), '\n')
+cat('Standard Deviation: ', sd(Earnings_and_Height$educ), '\n')
+cat('Median: ', median(Earnings_and_Height$educ), '\n')
+
+```
+
+
+## Use the summary() function on earnings, height, weight, age and years of education.
+
+### Interquartile range for earnings:
+```{r}
+cat("Summary statistics for earnings:\n")
+summary(Earnings_and_Height$earnings)
+cat('\nQuantiles: ', quantile(Earnings_and_Height$earnings))
+cat('\nInterquartile Range = ', IQR(Earnings_and_Height$earnings))
+```
+
+### Interquartile range for height:
+```{r}
+cat("Summary statistics for height:\n")
+summary(Earnings_and_Height$height)
+cat('\nQuantiles: ', quantile(Earnings_and_Height$height))
+cat('\nInterquartile Range = ', IQR(Earnings_and_Height$height))
+```
+
+### Interquartile range for weight:
+```{r}
+cat("Summary statistics for weight:\n")
+summary(Earnings_and_Height$weight)
+cat('\nQuantiles: ', quantile(Earnings_and_Height$weight))
+cat('\nInterquartile Range = ', IQR(Earnings_and_Height$weight))
+```
+
+### Interquartile range for age:
+```{r}
+cat("Summary statistics for age:\n")
+summary(Earnings_and_Height$age)
+cat('\nQuantiles: ', quantile(Earnings_and_Height$age))
+cat('\nInterquartile Range = ', IQR(Earnings_and_Height$age))
+```
+
+### Interquartile range for years of education:
+```{r}
+cat("Summary statistics for years of education:\n")
+summary(Earnings_and_Height$educ)
+cat('\nQuantiles: ', quantile(Earnings_and_Height$educ))
+cat('\nInterquartile Range = ', IQR(Earnings_and_Height$educ))
+```
+## What percent of the people in the data set are female?
+
+```{r}
+female <- 1 - mean(Earnings_and_Height$sex)
+female
+
+```
+
+55.8% of the people in the dataset are female
+
+## How many people in the data set are mechanics? Find and print the number of people for each of the 15 occupations.
+
+
+```{r}
+Earnings_and_Height %>% count(occupation)
+```
+
+There are 534 people who are mechanics
+
+## Test the null hypothesis that the mean age of the population is 40. Can you reject the null hypothesis? What is a 95 percent confidence interval for the age?
+
+We test the null hypothesis that the mean age of the population is equal to $40$ against the alternate hypothesis that it is not: 
+$$H_0: \mu = 40$$
+$$H_1: \mu \neq 40$$
+
+```{r}
+t.test(Earnings_and_Height$age, mu=40)
+
+```
+We can reject the null hypothesis as the mean of $40$ falls outside our confidence interval. The p-value is astronomically smaller than our significance level, thus we reject at a $5\%$ level. The $95\%$ confidence interval is $[40.77, 41.07]$
+
+## Find the mean earnings for men and the mean earnings for women.
+
+```{r}
+Earnings_and_Height %>% group_by(sex) %>% get_summary_stats(earnings, type = "mean_sd")
+
+```
+
+The mean earnings for men is \$48,459.75 and the mean for women is \$45,621.
+
+
+## Creating a box plot of the spread of the earnings for each sex
+
+```{r}
+bxp <- ggboxplot(
+  Earnings_and_Height, x = "sex", y = "earnings", ylab = "Earnings", xlab = "Sex", add = "jitter")
+bxp
+```
+
+## Perform a t-test for the difference in the mean incomes between men and women. Test the null hypothesis that the mean difference is zero.
+
+We test the null hypothesis that the mean incomes between males and females are equal, against the alternative hypothesis that the mean incomes between the two sexes are not equal: 
+
+$$H_0: \mu_{male} = \mu_{female}$$ 
+$$H_1: \mu_{male} \neq \mu_{female}$$
+
+```{r}
+stat.test <- Earnings_and_Height %>% 
+  t_test(earnings ~ sex, mu =0) %>% 
+  add_significance()
+stat.test
+```
+### What is the p-value testing the null that the earnings between the two sexes are equal?
+
+The p-value is testing the probability that  we get observed sample results as extreme as the ones we calculated assuming there is no difference between the means of earnings between males and females. Our p-value is far smaller than any conventional significance levels of $0.05$, or even $0.01$. Therefore, this p-value tells us to reject the null hypothesis at the $95\%$ or even $99\%$ confidence level.
+
+## Let’s look at how height and income are correlated.
+
+```{r}
+cor(Earnings_and_Height$height, y = Earnings_and_Height$earnings)
+```
+
+## What is the correlation between the two variables? What is the p-value of the sample correlation testing the null of no correlation? What is a 95 percent confidence interval for the correlation? Do you think height and income are correlated?
+
+We test the null hypothesis that the true correlation between height and earnings is equal to zero against the alternative that it is not:
+
+$$H_0: \rho = 0$$
+$$H_1: \rho \neq 0$$
+```{r}
+cor.test(Earnings_and_Height$height, y = Earnings_and_Height$earnings)
+```
+
+The two variables - height and income - are positively but weakly correlated to each other as their correlation coefficient is approximately $0.10$. With a $p$-value  drastically $< 0.05$, we can reject the null hypothesis that the true correlation between height and earnings is $0$. The $95\%$ confidence interval for the correlation is $[0.0898 , 0.1188]$
+
+The following scatter plot is a visual representation of the correlation between height and earnings:
+
+```{r}
+ggscatter(Earnings_and_Height, x = "height", y = "earnings", add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Inches of height", ylab = "Earnings in dollars")
+```
+
+## Hypothesis testing of variances: Testing if the variance of earnings is equal to $727,000,000. What is the p-value for the test? Do you reject the null hypothesis at the five percent level? What is a 95% confidence level for the variance?
+
+$$H_0: \sigma^2 = 727,000,000 $$
+$$H_1: \sigma^2 \neq 727,000,000$$
+
+```{r}
+sd(Earnings_and_Height$earnings)
+var(Earnings_and_Height$earnings)
+varTest(Earnings_and_Height$earnings, alternative = "two.sided", conf.level = 0.95, sigma.squared = 727000000)
+```
+
+
+In our test, the $p$-value $= 0.78$ which is greater than our significance level of $0.05$, therefore we fail to reject the null hypothesis that the variance of earnings is equal to $\$727,000,000$. The $95\%$ confidence level is $[710,064,916\ , \ 740,131,882]$ and $\$727,000,000$ falls within this confidence interval.
+
+
+## Test if the variance in earnings for males and females are the same. Is this close enough to fail to reject the null hypothesis that they are equal? Do we reject the null hypothesis that the two earnings variances are equal for the two genders? What is the p-value for the test that the two variances are equal?
+
+We test the null hypothesis that the earnings for males and females are the same, against the alternate hypothesis that they are not:
+
+$$H_0: \frac{\sigma^2_{male}}{\sigma^2_{female}} = 1$$
+$$H_1: \frac{\sigma^2_{male}}{\sigma^2_{female}} \neq 1$$ 
+
+```{r}
+Earnings_and_Height %>% group_by(sex) %>% get_summary_stats(earnings, type = "mean_sd")
+var.test(earnings ~ sex, Earnings_and_Height, ratio =1)
+```
+
+We fail to reject the null hypothesis that the two variances are equal as the $p$-value of 0.68 is not statistically significant at the $0.05$ level. The $95\%$ confidence interval of $[0.95, 1.03]$ contains $1$, which is consistent with the null hypothesis, hence the failure to reject. If the null hypothesis is true, we are likely to see test statistics as extreme as the calculated $68\%$ of the time
+
+## What happens if I create more than two values for sex? Let’s change the value of the sex for a single person in the data frame.
+
+```{r, error=TRUE}
+Earnings_and_Height[2,1] = 2
+var.test(earnings ~ sex, Earnings_and_Height, ratio =1)
+
+```
+
+
+$$The \ End$$
